@@ -1,0 +1,83 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 40px;
+}
+
+section {
+    border: 1px solid #ccc;
+    padding: 20px;
+    width: 400px;
+    margin-bottom: 20px;
+}
+
+.player {
+    cursor: pointer;
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+.player:hover {
+    background-color: #f0f0f0;
+}
+
+.card {
+    border: 1px solid #ccc;
+    padding: 10px;
+    margin-bottom: 10px;
+}
+
+button {
+    margin-top: 15px;
+    padding: 8px 15px;
+    cursor: pointer;
+}
+
+.player-card{
+    position: relative;
+    cursor: pointer;
+}
+
+.player-tooltip {
+    display: none;
+    position: absolute;
+    left: 105%;
+    top: 0;
+    width: 240px;
+    padding: 15px;
+    background-color: #1a1a1a;
+    color: white;
+    border: 1px solid #444;
+    border-radius: 8px;
+    z-index: 1000;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+}
+
+.player-card:hover .player-tooltip{
+    display: block;
+}
+
+.tooltip-title {
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.tooltip-subtitle {
+    font-size: 13px;
+    opacity: 0.7;
+    margin-top: 3px;
+}
+
+.attribute-row{
+    display: flex;
+    justify-content: space-between;
+    margin: 6px 0;
+}
+
+.attribute-bonus{
+    color: #4caf50;
+    font-weight: bold;
+}
+
+.attribute-base {
+    color: #aaa;
+}
