@@ -43,41 +43,91 @@ export class TeamEvaluator {
 
     static calcRoleScore(players) {
         if (!players || players.length === 0) {
-            return 0;
+            return { 
+                score: 0, 
+                assignments: []
+            };
         }
 
-        const rolesOccupied = new Set();
+        const occupiedRoles = new Set();
+        const masteredRoles = new Set();
+        const assignments = [];
 
         players.forEach(player => {
-            const role = this.resolvePlayerRole(player, rolesOccupied);
+            const assignment = this.resolvePlayerRole(
+                player, 
+                occupiedRoles
+            );
 
-            if (role) {
-                rolesOccupied.add(role);
+            if (!assignment) {
+                return;
             }
+
+            const { role, mastery } = assignment;
+
+            if (mastery) {
+                masteredRoles.add(role);
+            }
+
+            assignments.push({
+                player,
+                role,
+                mastery
+            });
         });
-        
-        return (
-            rolesOccupied.size /
+
+        const score = (
+            masteredRoles.size / 
             this.REQUIRED_ROLES.length
         ) * 100;
+
+        return {
+            score,
+            assignments
+        };
     }
 
-    static resolvePlayerRole(player, rolesOccupied) {
+    static resolvePlayerRole(player, occupiedRoles) {
         if (
             this.REQUIRED_ROLES.includes(player.primaryRole) &&
-            !rolesOccupied.has(player.primaryRole)
+            !occupiedRoles.has(player.primaryRole)
         ) {
-            return player.primaryRole;
+            occupiedRoles.add(player.primaryRole);
+
+            return {
+                role: player.primaryRole,
+                mastery: true
+            };
         }
 
         if (
             this.REQUIRED_ROLES.includes(player.secondaryRole) &&
-            !rolesOccupied.has(player.secondaryRole)
+            !occupiedRoles.has(player.secondaryRole)
         ) {
-            return player.secondaryRole;
+            occupiedRoles.add(player.secondaryRole);
+
+            return {
+                role: player.secondaryRole,
+                mastery: true
+            };
         }
         
-        return null;
+        const availableRoles = this.REQUIRED_ROLES.filter(
+            role => !occupiedRoles.has(role)
+        );
+
+        if (availableRoles.length === 0) {
+            return null;
+        }
+
+        const occupiedRole = availableRoles[0];
+
+        occupiedRoles.add(occupiedRole);
+
+        return {
+            role: occupiedRole,
+            mastery: false
+        };
     }
 
     static calcPlayerOverall(player, coach = null, roleScore = 0) {
@@ -93,7 +143,7 @@ export class TeamEvaluator {
                 const coachBonus = this.calcCoachBonus(coach, roleScore);
 
                 attributes[attribute] = Math.min(
-                    99,
+                    99.9,
                     attributes[attribute] + coachBonus
                 );
             }
@@ -119,7 +169,7 @@ export class TeamEvaluator {
 
         const roleScoreFactor = Math.max(
             0,
-            Math.min(99, roleScore)
+            Math.min(100, roleScore)
         ) / 100;
 
         return (
@@ -130,7 +180,8 @@ export class TeamEvaluator {
     }
 
     static calcFinalScore(players, coach = null) {
-        const roleScore = this.calcRoleScore(players);
+        const roleEvaluation = this.calcRoleScore(players);
+        const roleScore = roleEvaluation.score;
         const overallAvg =
             this.calcOverallAvg(players, coach, roleScore);
 
@@ -141,20 +192,24 @@ export class TeamEvaluator {
     }
 
     static evaluate(players, coach = null) {
-        const roleScore = this.calcRoleScore(players);
+        const roleEvaluation = this.calcRoleScore(players);
+        const roleScore = roleEvaluation.score;
+        const roleAssignments = roleEvaluation.assignments;
         const overallAvg = this.calcOverallAvg(players, coach, roleScore);
         const finalScore = this.calcFinalScore(players, coach);
         const coachBonus = this.calcCoachBonus(coach,roleScore);
-        const rolesOccupied = Math.round(
+        const masteredRoles = Math.round(
             (roleScore / 100) *
             this.REQUIRED_ROLES.length
         );
 
+
         return {
             overallAvg,
             roleScore,
-            rolesOccupied,
+            masteredRoles,
             totalRoles: this.REQUIRED_ROLES.length,
+            roleAssignments,
             coachBonus,
             finalScore
         };
