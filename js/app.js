@@ -1,5 +1,6 @@
 import { teams } from "./data/teams.js";
 import { Draft } from "./domain/Draft.js";
+import { TeamEvaluator } from "./domain/TeamEvaluator.js";
 import { DraftStatus, PlayerAttribute } from "./domain/enums.js";
 
 const turnDiv = document.getElementById("turn");
@@ -314,21 +315,85 @@ function renderMyTeam() {
 }
 
 function createSelectedPlayerCard(player){
-    const overall = player.getOverall();
-    const card = document.createElement("div");
+   const card = document.createElement("div");
+
     card.className = "selected-player-card";
 
-    card.textContent = player.igl ? 
-        ` 
-            [${overall}] ${player.nickName} || 
-            ${player.primaryRole} ou ${player.secondaryRole} ==> (IGL)
-        ` : 
-        ` 
-            [${overall}] ${player.nickName} || 
-            ${player.primaryRole} ou ${player.secondaryRole}
+    const evaluation = draft.getMyTeamEvaluation();
+
+    const assignment = getPlayerAssignment(player, evaluation);
+
+    const occupiedRole = assignment?.role || "N/A";
+
+    const masteryIndicator = assignment?.mastery ? "✓" : "⚠";
+
+    const baseOverall = player.getOverall();
+
+    let boostedOverall = baseOverall;
+    let coachText = "";
+
+    if (draft.selectedCoach) {
+        const roleScore = evaluation.roleScore;
+
+        const coachBonus = TeamEvaluator.calcCoachBonus(
+            draft.selectedCoach, roleScore
+        );
+
+        const baseAttributes = player.getAttributes();
+
+        const boostedAttribute = TeamEvaluator.SPECIALTY_ATTRIBUTE_MAP[
+            draft.selectedCoach.specialty
+        ];
+
+        const boostedAttributes = {
+            ...baseAttributes,
+        };
+
+        if (boostedAttribute) {
+            boostedAttributes[boostedAttribute] = Math.min(
+                99,
+                boostedAttributes[boostedAttribute] + coachBonus
+            );
+
+            boostedOverall = (
+                boostedAttributes[PlayerAttribute.MECHANICAL] +
+                boostedAttributes[PlayerAttribute.TACTICAL] +
+                boostedAttributes[PlayerAttribute.PRESENCE]
+            ) / 3;
+
+            const attributeLabel = getAttributeLabel(boostedAttribute);
+
+            coachText = `+${coachBonus.toFixed(1)} ${attributeLabel}`;
+        }
+    }
+
+    card.innerHTML = `
+        <div>
+            <p>
+                [${boostedOverall.toFixed(0)}] ${player.nickName} ||
+                ${occupiedRole} ${ player.igl ? "(IGL)" : ""}
+                ${masteryIndicator} ${coachText ? `|| ${coachText}` : ""}
+            </p>
+        </div>
     `;
-    
+
     return card;
+}
+
+function getAttributeLabel(attribute) {
+    switch (attribute) {
+        case PlayerAttribute.MECHANICAL:
+            return "Mech.";
+
+        case PlayerAttribute.TACTICAL:
+            return "Tact.";
+
+        case PlayerAttribute.PRESENCE:
+            return "Pres.";
+
+        default:
+            return "";
+    }
 }
 
 function createSelectedCoachCard(coach) {
@@ -339,6 +404,16 @@ function createSelectedCoachCard(coach) {
     card.textContent = `Coach: ${coach.nickName} || ${coach.specialty}`
 
     return card;
+}
+
+function getPlayerAssignment(player, evaluation) {
+    if (!evaluation.roleAssignments) {
+        return null;
+    }
+
+    return evaluation.roleAssignments.find(
+        assignment => assignment.player.id === player.id
+    );
 }
 
 function renderMyTeamEvaluation() {
@@ -357,13 +432,13 @@ function renderMyTeamEvaluation() {
         <p>
             Overall: 
             <strong>
-                ${evaluation.overallAvg.toFixed(1)}
+                ${evaluation.overallAvg.toFixed(0)}
             </strong>
         </p>
         <p>
             Roles Ocupadas:
             <strong>
-                ${evaluation.rolesOccupied}/${evaluation.totalRoles}
+                ${evaluation.masteredRoles}/${evaluation.totalRoles}
             </strong>
         </p>
          ${
@@ -379,7 +454,7 @@ function renderMyTeamEvaluation() {
                 <div class="evaluation-row final-score">
                     <span>Final Score</span>
                     <strong>
-                        ${evaluation.finalScore.toFixed(1)}
+                        ${evaluation.finalScore.toFixed(0)}
                     </strong>
                 </div>
                 `
