@@ -196,6 +196,8 @@ export class TeamEvaluator {
         const roleScore = roleEvaluation.score;
         const roleAssignments = roleEvaluation.assignments;
         const overallAvg = this.calcOverallAvg(players, coach, roleScore);
+        const overallAvgApplied = overallAvg * this.OVERALL_WEIGHT;
+        const roleScoreApplied = roleScore * this.ROLES_WEIGHT;
         const finalScore = this.calcFinalScore(players, coach);
         const coachBonus = this.calcCoachBonus(coach,roleScore);
         const masteredRoles = Math.round(
@@ -206,7 +208,9 @@ export class TeamEvaluator {
 
         return {
             overallAvg,
+            overallAvgApplied,
             roleScore,
+            roleScoreApplied,
             masteredRoles,
             totalRoles: this.REQUIRED_ROLES.length,
             roleAssignments,

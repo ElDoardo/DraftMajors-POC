@@ -430,9 +430,13 @@ function renderMyTeamEvaluation() {
     div.innerHTML = `
         <h3>Avaliação do Time</h3>
         <p>
-            Overall: 
+            Overall Médio: 
             <strong>
-                ${evaluation.overallAvg.toFixed(0)}
+                ${evaluation.overallAvg.toFixed(1)}
+            </strong>
+            →
+            <strong>
+                ${evaluation.overallAvgApplied.toFixed(2)}
             </strong>
         </p>
         <p>
@@ -440,22 +444,23 @@ function renderMyTeamEvaluation() {
             <strong>
                 ${evaluation.masteredRoles}/${evaluation.totalRoles}
             </strong>
+            →
+            <strong>
+                ${evaluation.roleScoreApplied}
+            </strong>
         </p>
          ${
             draft.selectedCoach
             ? `
-                <div class="evaluation-row">
-                    <span>Coach Bonus</span>
-                    <strong>
-                        +${evaluation.coachBonus.toFixed(0)}
-                    </strong>
-                </div>
-
                 <div class="evaluation-row final-score">
-                    <span>Final Score</span>
-                    <strong>
-                        ${evaluation.finalScore.toFixed(0)}
-                    </strong>
+                    <u>Final Score: </u>
+                    <u>
+                        ${evaluation.overallAvgApplied.toFixed(2)} + 
+                        ${evaluation.roleScoreApplied} =
+                        <strong>
+                            ${evaluation.finalScore.toFixed(2)}
+                        </strong>
+                    </u>
                 </div>
                 `
             : ""
