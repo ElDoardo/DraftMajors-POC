@@ -20,6 +20,7 @@ export class SimulationTeam {
 
         this.wins = 0;
         this.losses = 0;
+        this.byes = 0;
 
         this.status = "ACTIVE";
 
@@ -36,6 +37,11 @@ export class SimulationTeam {
 
     registerLoss() {
         this.losses++;
+    }
+
+    registerBye() {
+        this.wins++;
+        this.byes++;
     }
 
     isActive() {

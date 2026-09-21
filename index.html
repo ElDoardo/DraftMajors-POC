@@ -20,54 +20,88 @@
 <body>
 
     <main>
+        <!--DRAFT-->
+        <section id="draftArea">
+            
+            <h1>Major Draft</h1>
 
-        <h1>Major Draft</h1>
+            <div 
+                id="turn" 
+                class="turn"
+            ></div>
 
-        <div id="turn"></div>
+            <section>
 
-        <section>
-            <h2>Time Sorteado</h2>
+                <h2>Time Sorteado</h2>
+    
+                <div 
+                    id="releasedTeam" 
+                    class="list"
+                ></div>
+    
+                <button id="reroll">
+                    Reroll
+                </button>
+    
+                <span 
+                    id="remainingRerolls"
+                ></span>
 
-            <div id="releasedTeam"></div>
+            </section>
+    
+            <section>
+                <h2>Meu Time</h2>
+                
+                <div 
+                    id="myTeam"
+                    class="list"
+                ></div>
 
-            <button id="reroll">
-                Reroll
+            </section>
+    
+            <button
+                id="startSimulation"
+                disabled
+            >
+                Entrar no Major
             </button>
 
-            <span id="remainingRerolls"></span>
         </section>
 
-        <section>
-            <h2>Meu Time</h2>
-            
-            <div id="myTeam"></div>
-        </section>
-
-        <button
-            id="startMajor"
-            disabled
-        >
-            Entrar no Major
-        </button>
-
+        <!--SIMULATION-->
         <section
             id="simulation"
             class="simulation"
             style="display: none;"
         >
+            <h1>
+                Major Simulation
+            </h1>
 
-            <h2 id="simulationStage"></h2>
+            <div
+                id="simulationStage"
+                class="simulation-stage"
+            ></div>
 
-            <div id="simulationUserTeam"></div>
+             <div
+                id="simulationUserTeam"
+                class="simulation-user-team"
+            ></div>
+
+            <div
+                id="simulationResult"
+                class="simulation-result"
+            ></div>
 
             <button id="simulateRound">
                 Simular Rodada
             </button>
-
-            <div id="simulationResult"></div>
-
-            <div id="standings"></div>
-
+            
+            <div
+                id="standings"
+                class="standings"
+            ></div>
+            
         </section>
 
     </main>

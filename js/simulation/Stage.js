@@ -7,19 +7,29 @@ export class Stage {
         teams
     }){
         this.id = id;
+
         this.name = name;
         this.type = type;
+
         this.teams = teams;
 
         this.currentRound = 0;
 
         this.matches = [];
 
+        this.currentTeams = [...teams];
+
+        this.byes = [];
+
         this.completed = false;
     }
 
     addMatch(match) {
         this.matches.push(match);
+    }
+
+    addBye(team) {
+        this.byes.push(team);
     }
 
     nextRound() {
