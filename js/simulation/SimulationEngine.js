@@ -9,7 +9,19 @@ export class SimulationEngine {
         this.teamFactory = teamFactory;
     }
 
-    /* CRIA MAJOR */
+/* TORNEIO */
+    //engine da simulação do torneio
+    simulateMajor(simulation) {
+
+        while (simulation.status === "IN_PROGRESS") {
+
+            this.simulateNextRound(simulation);
+        }
+
+        return simulation;
+    }  
+
+    //cria torneio
     createMajorSimulation(userTeam, opponentTeams) {
 
         if(opponentTeams.length < 31) {
@@ -19,8 +31,7 @@ export class SimulationEngine {
         }
 
         const opponentPool = opponentTeams.map(
-            team => 
-                this.teamFactory.buildOpponentTeam(team)
+            team => this.teamFactory.buildOpponentTeam(team)
         );
         
         const stage1Pool = opponentPool.slice(0, 15);
@@ -54,7 +65,7 @@ export class SimulationEngine {
         return simulation;
     }
 
-    /* SIMULA PARTIDA */
+    //partidas do torneio
     simulateMatch(teamA, teamB, stage, roundName) {
 
         const match = new Match({
@@ -71,7 +82,11 @@ export class SimulationEngine {
                 teamA, teamB
             );
 
-        match.setResult(result);
+        match.setResult(
+            result.winner, 
+            result.loser, 
+            result.probabilities
+        );
 
         if(stage.type === "SWISS"){
             this.registerSwissResult(result);
@@ -82,42 +97,147 @@ export class SimulationEngine {
         return match;
     }
 
-    /* SUIÇO */
-    //registra resultados
-    registerSwissResult({
-        winner,
-        loser
-    }){
+    //rounds do torneio
+    simulateNextRound(simulation) {
 
-        winner.registerWin();
-        loser.registerLoss();
-
-        winner.addOpponent(
-            loser.id
-        );
-
-        loser.addOpponent(
-            winner.id
-        );
-
-         if (winner.wins >= 3) {
-            winner.qualify();
+        if (simulation.status !== "IN_PROGRESS") {
+            return null;
         }
 
-        if (loser.losses >= 3) {
-            loser.eliminate();
+        const stage =
+            simulation.getCurrentStage();
+
+        if (!stage) {
+            return null;
         }
+        // rounds da fase de grupos suiça
+        if (stage.type === "SWISS") {
+
+            const result =
+                this.simulateSwissRound(
+                    stage
+                );
+
+            simulation.lastRoundMatches = result.matches;
+
+            simulation.lastRoundByes = result.byes;
+
+            simulation.lastRoundStage = stage.name;
+
+            if (simulation.userTeam.status === "ELIMINATED") {
+
+                simulation.eliminateUserTeam();
+
+                return result;
+            }
+
+            if (stage.completed) {
+
+                this.advanceToNextStage(
+                    simulation
+                );
+            }
+
+            return result;
+        }
+        // rounds dos playoffs
+        if (stage.type === "PLAYOFFS") {
+
+            const matches =
+                this.simulatePlayoffRound(
+                    stage
+                );
+
+            simulation.lastRoundMatches = matches;
+
+            simulation.lastRoundByes = [];
+
+            simulation.lastRoundStage = stage.name;
+
+            if (stage.completed) {
+
+                const champion = stage.currentTeams[0];
+
+                if (champion === simulation.userTeam) {
+
+                    simulation.setChampion(champion);
+
+                } else {
+
+                    simulation.eliminateUserTeam();
+                }
+
+                return matches;
+            }
+
+            const userStillAlive = stage.currentTeams.includes(
+                simulation.userTeam
+            );
+
+            if (!userStillAlive) {
+
+                simulation.eliminateUserTeam();
+            }
+
+            return matches;
+        }
+
+        return null;
     }
 
-    //define término
-    isSwissComplete(stage){
+    //estágios do torneio
+    advanceToNextStage(simulation) {
 
-        return stage.teams.every(
-            team => team.wins >= 3 || team.losses >=3
-        );
+        const currentStage = simulation.getCurrentStage();
+
+        if (simulation.status !== "IN_PROGRESS") {
+            return null;
+        }
+
+        if (!currentStage || !currentStage.completed) {
+            return null;
+        }
+
+        let nextStage = null;
+
+        if (currentStage.name === "Stage 1") {
+
+            nextStage =
+                this.createNextSwissStage(
+                    simulation,
+                    "stage2",
+                    2
+                );
+        }
+
+        else if (currentStage.name === "Stage 2") {
+
+            nextStage =
+                this.createNextSwissStage(
+                    simulation,
+                    "stage3",
+                    3
+                );
+        }
+
+        else if (currentStage.name === "Stage 3") {
+
+            nextStage = this.createPlayoffs(simulation);
+        }
+
+        if (!nextStage) {
+            return null;
+        }
+
+        simulation.addStage(nextStage);
+
+        simulation.nextStage();
+
+        return nextStage;
     }
 
-    //cria pares
+/* FASE DE GRUPOS */
+    //monta pares para fase de grupos
     createSwissPairings(teams){
         const activeTeams = teams
             .filter(team => team.isActive())
@@ -142,7 +262,7 @@ export class SimulationEngine {
             const teamA = remaining.shift();
 
             let opponentIndex = remaining.findIndex(
-                team => !teamA.hasPlayesAgainst(team.id)
+                team => !teamA.hasPlayedAgainst(team.id)
             );
 
             if(opponentIndex === -1){
@@ -169,7 +289,7 @@ export class SimulationEngine {
         return pairings;
     }
 
-    //simula round
+    //rounds da fase de grupos
     simulateSwissRound(stage) {
 
         stage.nextRound();
@@ -218,7 +338,7 @@ export class SimulationEngine {
         return {matches, byes};
     }
 
-    //next stage
+    //estágios da fase de grupos
     createNextSwissStage(simulation, poolName, stageNumber) {
 
         const currentStage =
@@ -251,9 +371,35 @@ export class SimulationEngine {
         });
     }
 
-    /* PLAYOFFS */
+    //resultados da fase de grupos
+    registerSwissResult({ winner, loser}){
 
-    //cria estágio de playoffs
+        winner.registerWin();
+        loser.registerLoss();
+
+        winner.addOpponent(loser.id);
+
+        loser.addOpponent(winner.id);
+
+         if (winner.wins >= 3) {
+            winner.qualify();
+        }
+
+        if (loser.losses >= 3) {
+            loser.eliminate();
+        }
+    }
+
+    //finaliza fase de grupos
+    isSwissComplete(stage){
+
+        return stage.teams.every(
+            team => team.wins >= 3 || team.losses >=3
+        );
+    }
+
+/* PLAYOFFS */
+    //cria playoffs
     createPlayoffs(simulation) {
 
         const currentStage = simulation.getCurrentStage();
@@ -272,7 +418,7 @@ export class SimulationEngine {
         });
     }
 
-    //pega nome do round
+    //nome dos rounds de playoffs 
     getPlayoffRoundName(stage) {
 
         switch (
@@ -293,7 +439,7 @@ export class SimulationEngine {
         }
     }
 
-    //simula round indivudual
+    //rounds de playoffs
     simulatePlayoffRound(stage){
 
         const roundName = this.getPlayoffRoundName(
@@ -334,174 +480,4 @@ export class SimulationEngine {
 
         return matches;
     }
- 
-   /* Controle de estágios */
-
-    advanceToNextStage(simulation) {
-
-        const currentStage = simulation.getCurrentStage();
-
-        if (simulation.status !== "IN_PROGRESS") {
-            return null;
-        }
-
-        if (!currentStage || !currentStage.completed) {
-            return null;
-        }
-
-        let nextStage = null;
-
-        if (currentStage.name === "Stage 1") {
-
-            nextStage =
-                this.createNextSwissStage(
-                    simulation,
-                    "stage2",
-                    2
-                );
-        }
-
-        else if (currentStage.name === "Stage 2") {
-
-            nextStage =
-                this.createNextSwissStage(
-                    simulation,
-                    "stage3",
-                    3
-                );
-        }
-
-        else if (currentStage.name === "Stage 3") {
-
-            nextStage = this.createPlayoffs(simulation);
-        }
-
-        if (!nextStage) {
-            return null;
-        }
-
-        simulation.addStage(
-            nextStage
-        );
-
-        simulation.nextStage();
-
-        return nextStage;
-    }
-
-    /*Controle de rounds*/
-    simulateNextRound(simulation) {
-
-        if (simulation.status !== "IN_PROGRESS") {
-            return null;
-        }
-
-        const stage =
-            simulation.getCurrentStage();
-
-        if (!stage) {
-            return null;
-        }
-
-        if (stage.type === "SWISS") {
-
-            const result =
-                this.simulateSwissRound(
-                    stage
-                );
-
-            simulation.lastRoundMatches = result.matches;
-
-            simulation.lastRoundByes = result.byes;
-
-            simulation.lastRoundStage = stage.name;
-
-            if (simulation.userTeam.status === "ELIMINATED") {
-
-                simulation.eliminateUserTeam();
-
-                return result;
-            }
-
-            if (stage.completed) {
-
-                this.advanceToNextStage(
-                    simulation
-                );
-            }
-
-            return result;
-        }
-        /*
-        ============================
-        PLAYOFFS
-        ============================
-        */
-
-        if (stage.type === "PLAYOFF") {
-
-            const matches =
-                this.simulatePlayoffRound(
-                    stage
-                );
-
-            simulation.lastRoundMatches = matches;
-
-            simulation.lastRoundByes = [];
-
-            simulation.lastRoundStage = stage.name;
-
-            if (stage.completed) {
-
-                const champion = stage.currentTeams[0];
-
-                if (champion === simulation.userTeam) {
-
-                    simulation.setChampion(champion);
-
-                } else {
-
-                    simulation.eliminateUserTeam();
-                }
-
-                return matches;
-            }
-
-            const userStillAlive =
-                stage.currentTeams.includes(
-                    simulation.userTeam
-                );
-
-            if (!userStillAlive) {
-
-                simulation.eliminateUserTeam();
-            }
-
-            return matches;
-        }
-
-        return null;
-    }
-
-    //completa simulação
-    simulateMajor(
-        simulation
-    ) {
-
-        while (
-            simulation.status ===
-            "IN_PROGRESS"
-        ) {
-
-            this.simulateNextRound(
-                simulation
-            );
-        }
-
-        return simulation;
-    }
-
-    
-
-    
 }

@@ -5,13 +5,18 @@ export class Match {
         teamA,
         teamB,
         stage,
-        round
+        round,
+        roundName
     }){
         this.id = id;
+
         this.teamA = teamA;
         this.teamB = teamB;
+
         this.stage = stage;
+        
         this.round = round;
+        this.roundName = roundName;
 
         this.teamAProbability = null;
         this.teamBProbability = null;

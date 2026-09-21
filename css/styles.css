@@ -4,80 +4,192 @@ body {
 }
 
 section {
-    border: 1px solid #ccc;
-    padding: 20px;
-    width: 400px;
     margin-bottom: 20px;
 }
 
-.player {
-    cursor: pointer;
-    padding: 10px;
-    border-bottom: 1px solid #eee;
+.list {
+    border: 1px solid #ccc;
+    padding: 15px;
+    width: 500px;
 }
 
-.player:hover {
+.turn {
+    font-weight: bold;
+    margin-bottom: 15px;
+}
+
+/* player card */
+.player-card {
+    position: relative;
+
+    padding: 10px;
+
+    margin-bottom: 8px;
+
+    border: 1px solid #ccc;
+
+    cursor: pointer;
+}
+
+.player-card:hover {
     background-color: #f0f0f0;
 }
 
-.card {
-    border: 1px solid #ccc;
+.selected-player-card {
     padding: 10px;
-    margin-bottom: 10px;
+
+    margin-bottom: 8px;
+
+    border: 1px solid #ccc;
 }
 
-button {
-    margin-top: 15px;
-    padding: 8px 15px;
-    cursor: pointer;
+.selected-coach-card {
+    padding: 10px;
+
+    margin-bottom: 8px;
+
+    border: 1px solid #999;
 }
 
-.player-card{
-    position: relative;
-    cursor: pointer;
-}
 
+/* tooltip */
 .player-tooltip {
     display: none;
+
     position: absolute;
+
     left: 105%;
     top: 0;
+
     width: 240px;
+
     padding: 15px;
-    background-color: #1a1a1a;
+
+    background: #1b1b1b;
+
     color: white;
+
     border: 1px solid #444;
+
     border-radius: 8px;
+
     z-index: 1000;
-    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+
+    box-shadow:
+        0 6px 20px
+        rgba(0, 0, 0, 0.35);
 }
 
-.player-card:hover .player-tooltip{
+.player-card:hover
+.player-tooltip {
     display: block;
 }
 
 .tooltip-title {
     font-size: 18px;
+
     font-weight: bold;
 }
 
 .tooltip-subtitle {
     font-size: 13px;
+
     opacity: 0.7;
-    margin-top: 3px;
 }
 
-.attribute-row{
+.attribute-row,
+.evaluation-row {
     display: flex;
+
     justify-content: space-between;
-    margin: 6px 0;
+
+    margin: 7px 0;
 }
 
-.attribute-bonus{
-    color: #4caf50;
+
+/* evaluation */
+.team-evaluation {
+    margin-top: 15px;
+
+    padding: 15px;
+
+    border: 2px solid #333;
+}
+
+.final-score {
+    font-size: 18px;
+
     font-weight: bold;
 }
 
-.attribute-base {
-    color: #aaa;
+
+/* simulation */
+.simulation {
+    width: 700px;
+}
+
+.simulation-stage {
+    margin-bottom: 20px;
+
+    padding: 15px;
+
+    border: 1px solid #ccc;
+}
+
+.simulation-user-team {
+    margin-bottom: 20px;
+
+    padding: 15px;
+
+    border: 1px solid #ccc;
+}
+
+.simulation-result {
+    margin-bottom: 20px;
+
+    padding: 15px;
+
+    border: 2px solid #333;
+}
+
+.round-result {
+    padding: 10px;
+}
+
+.standings {
+    margin-top: 20px;
+}
+
+.standing,
+.user-standing {
+    display: grid;
+
+    grid-template-columns:
+        2fr 1fr 1fr 1fr;
+
+    gap: 10px;
+
+    padding: 10px;
+
+    border-bottom: 1px solid #eee;
+}
+
+.user-standing {
+    font-weight: bold;
+}
+
+
+/* buttons */
+button {
+    margin-top: 10px;
+
+    padding: 8px 15px;
+
+    cursor: pointer;
+}
+
+button:disabled {
+    cursor: not-allowed;
+
+    opacity: 0.5;
 }
